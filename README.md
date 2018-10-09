@@ -1,2 +1,2 @@
 # language-guesser
-Input a word, the neural network will attempt to guess the language of origin.
+Input a word, recieve the output of what languages the word may belong to.
