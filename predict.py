@@ -7,8 +7,8 @@ from sklearn.preprocessing import LabelEncoder
 from tensorflow import keras
 
 
-def read_dataset(filename):
-    df = pd.read_csv(filename)
+def read_dataset(filename, lines):
+    df = pd.read_csv(filename, nrows=lines)
     x = df[df.columns[0]].values
     y = df[df.columns[1]]
 
@@ -31,4 +31,5 @@ def one_hot_encode(labels):
     out[np.arange(n_labels), labels] = 1
     return out
 
-print(read_dataset("testing.csv"))
+
+print(type(read_dataset("data/testing.csv", 1000)))

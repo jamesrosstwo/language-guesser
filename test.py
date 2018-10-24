@@ -26,8 +26,8 @@ train = optimizer.minimize(loss)
 init = tf.global_variables_initializer()
 
 with tf.Session() as sess:
-    File_Writer = tf.summary.FileWriter('C:\\Users\\james.ross\\Desktop\\language-predictor\\graph', sess.graph)
+    File_Writer = tf.summary.FileWriter('graph', sess.graph)
     sess.run(init)
     for i in range(1000):
         sess.run(train, {x: [1, 2, 3, 4], y: [0, -1, -2, -3]})
-    print(sess.run([W,b]))
+    print(sess.run([W, b]))
