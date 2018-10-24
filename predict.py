@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib as plt
 import tensorflow as tf
 import tensorboard as tb
@@ -16,12 +17,11 @@ def read_dataset(filename, lines):
     encoder.fit(y)
     y = encoder.transform(y)
     Y = one_hot_encode(y)
+    X = []
     for i in x:
         i = [ord(c) for c in i]
-    encoder.fit(x)
-    x = encoder.transform(x)
-    X = one_hot_encode(x)
-    return [X, Y]
+        X.append(i)
+    return [np.array(X), np.array(Y)]
 
 
 def one_hot_encode(labels):
@@ -32,4 +32,14 @@ def one_hot_encode(labels):
     return out
 
 
-print(type(read_dataset("data/testing.csv", 1000)))
+def pad_data(data):
+    max_len = len(max(data, key=len))
+    data = keras.preprocessing.sequence.pad_sequences(data,
+                                                      value=0,
+                                                      padding='post',
+                                                      maxlen=max_len)
+    return data
+
+
+train_data = pad_data(read_dataset("data/training.csv", 10000)[0])
+
