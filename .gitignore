@@ -2,3 +2,5 @@
 /graph/**
 /.matplotlib/**
 /.keras/**
+/.vscode/**
+/.idea/**
