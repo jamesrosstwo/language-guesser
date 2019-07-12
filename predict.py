@@ -36,18 +36,23 @@ def encode_words(words):
     global char_to_map
     global map_to_char
     out = []
+    c = 0
     for word in words:
         current_word = []
-        for letter in word:
-            if len(word) > longest_word_len:
-                longest_word_len = len(word)
-            if ord(letter) not in char_to_map:
-                char_to_map[ord(letter)] = letter_count
-                map_to_char[letter_count] = ord(letter)
-                current_word.append(letter_count)
-                letter_count += 1
-            else:
-                current_word.append(char_to_map[ord(letter)])
+        c += 1
+        try:
+            for letter in word:
+                if len(word) > longest_word_len:
+                    longest_word_len = len(word)
+                if ord(letter) not in char_to_map:
+                    char_to_map[ord(letter)] = letter_count
+                    map_to_char[letter_count] = ord(letter)
+                    current_word.append(letter_count)
+                    letter_count += 1
+                else:
+                    current_word.append(char_to_map[ord(letter)])
+        except TypeError:
+            print("Unreadable word at line " + c)
         out.append(current_word)
     for word_idx in range(len(out)):
         word = out[word_idx]
@@ -95,9 +100,8 @@ def encode_user_word(word):
 def create_layers(i_shape):
     layers = [
         tf.keras.layers.Flatten(input_shape=i_shape),
-        tf.keras.layers.Dense(700, activation=tf.nn.relu),
-        tf.keras.layers.Dropout(0.3),
-        tf.keras.layers.Dropout(0.3),
+        # tf.keras.layers.Dense(700, activation=tf.nn.relu),
+        # tf.keras.layers.Dropout(0.3),
         tf.keras.layers.Dense(len(languages), activation=tf.nn.softmax)
     ]
     return layers
@@ -112,7 +116,7 @@ def create_model(x, y):
         m.add(layer)
     m.compile(
         optimizer='adam',
-        loss='categorical_crossentropy',
+        loss=tf.keras.backend.sparse_categorical_crossentropy,
         metrics=['accuracy'])
     m.fit(x, y, epochs=6)
     return m
@@ -121,11 +125,11 @@ def create_model(x, y):
 def guess_words(model):
     i = input()
     while i != "quit":
-        one_hot_word = encode_user_word(i)
-        print(one_hot_word)
-        print(decode_word(one_hot_word))
-        prediction = model.predict([[one_hot_word]]).argmax()
-        print("The model predicts", languages[prediction])
+        one_hot_word = np.asarray([encode_user_word(i)])
+        print(one_hot_word.shape)
+        prediction = model.predict(one_hot_word)
+        print(prediction)
+        # print("The model predicts", languages[prediction])
 
         i = input()
 
@@ -137,7 +141,10 @@ if __name__ == "__main__":
     map_to_char = {}
     char_to_map = {}
 
-    x_train, y_train, x_test, y_test = read_dataset("data/training.csv", data_length)
+    # requested_dataset = input("Enter the dataset name to use \n")
+    requested_dataset = "KoreanEnglish"
+    p = "data/" + requested_dataset + ".csv"
+    x_train, y_train, x_test, y_test = read_dataset(p, data_length)
     num_letters = len(map_to_char)
 
     print(num_letters, longest_word_len)
