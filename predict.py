@@ -1,3 +1,5 @@
+import random
+
 import tensorflow as tf
 import numpy as np
 import pandas as pd
@@ -52,14 +54,17 @@ def encode_words(words):
                 else:
                     current_word.append(char_to_map[ord(letter)])
         except TypeError:
-            print("Unreadable word at line " + c)
+            print("Unreadable word at line " + str(c))
         out.append(current_word)
     for word_idx in range(len(out)):
         word = out[word_idx]
-        one_hot_word = [[0] * letter_count] * longest_word_len
+        one_hot_word = []
+        for i in range(longest_word_len):
+            one_hot_word.append([0] * letter_count)
         for i in range(len(word)):
             one_hot_word[i][word[i]] = 1
         out[word_idx] = one_hot_word
+
     return out
 
 
@@ -100,8 +105,12 @@ def encode_user_word(word):
 def create_layers(i_shape):
     layers = [
         tf.keras.layers.Flatten(input_shape=i_shape),
-        # tf.keras.layers.Dense(700, activation=tf.nn.relu),
-        # tf.keras.layers.Dropout(0.3),
+        # tf.keras.layers.Embedding(num_letters, 50),
+        # tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(100)),
+        tf.keras.layers.Dense(700, activation=tf.nn.relu),
+        tf.keras.layers.Dropout(0.2),
+        tf.keras.layers.Dense(200, activation=tf.nn.relu),
+        tf.keras.layers.Dropout(0.2),
         tf.keras.layers.Dense(len(languages), activation=tf.nn.softmax)
     ]
     return layers
@@ -116,41 +125,76 @@ def create_model(x, y):
         m.add(layer)
     m.compile(
         optimizer='adam',
-        loss=tf.keras.backend.sparse_categorical_crossentropy,
+        loss="categorical_crossentropy",
         metrics=['accuracy'])
-    m.fit(x, y, epochs=6)
+    m.fit(x, y, epochs=7)
     return m
 
 
-def guess_words(model):
-    i = input()
+def guess_words_from_data(model, x, y):
+    num = 5
+    w = x[:num]
+    l = y[:num]
+    for i in range(num):
+        p = model.predict(np.asarray([w[i]]))
+        d = decode_word(w[i])
+        a = l[i]
+        print("The model predicts:", d, "-", languages[p.argmax()] + ". The actual language is", languages[a.argmax()])
+
+
+def guess_words_from_input(model):
+    i = input("Enter a word \n")
     while i != "quit":
         one_hot_word = np.asarray([encode_user_word(i)])
-        print(one_hot_word.shape)
         prediction = model.predict(one_hot_word)
+        print(languages)
         print(prediction)
-        # print("The model predicts", languages[prediction])
-
+        print("The model predicts: ", i, "-", languages[prediction.argmax()])
         i = input()
 
 
+def game(model, x, y):
+    player_score = 0
+    bot_score = 0
+    idx = random.randrange(0, len(x))
+    one_hot_word = x[idx]
+    decoded_word = decode_word(one_hot_word)
+    correct = languages[y[idx].argmax()]
+    i = input(decoded_word)
+    while i is not "quit":
+        bot_guess = languages[model.predict(np.asarray([one_hot_word])).argmax()]
+        print("You guessed", i, "while the bot guessed", bot_guess)
+        print("The actual answer is", correct)
+        if bot_guess == correct:
+            bot_score += 1
+        if i == correct:
+            player_score += 1
+        print("Your score:", player_score, " bot score:", bot_score)
+        idx = random.randrange(0, len(x))
+        one_hot_word = x[idx]
+        decoded_word = decode_word(one_hot_word)
+        correct = languages[y[idx].argmax()]
+        i = input(decoded_word)
+
+
 if __name__ == "__main__":
-    data_length = 10000
+    data_length = 30000
     longest_word_len = 0
     languages = []
     map_to_char = {}
     char_to_map = {}
 
     # requested_dataset = input("Enter the dataset name to use \n")
-    requested_dataset = "KoreanEnglish"
+    requested_dataset = "EasternEurope"
     p = "data/" + requested_dataset + ".csv"
     x_train, y_train, x_test, y_test = read_dataset(p, data_length)
     num_letters = len(map_to_char)
 
-    print(num_letters, longest_word_len)
-    print(x_train.shape)
-    print(x_test.shape)
+    print(languages)
+
+    print(num_letters, "letters - longest word is", longest_word_len, "letters long")
     model = create_model(x_train, y_train)
     model.evaluate(x_test, y_test)
 
-    guess_words(model)
+    # guess_words_from_input(model)
+    game(model, x_train, y_train)
