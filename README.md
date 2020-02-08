@@ -1,7 +1,6 @@
 # language-predictor
-Input a word, recieve the output of what languages the word may belong to.
-
-Dictionaries from https://github.com/titoBouzout/Dictionaries
+- Tensorflow classifier predicting the language of any input word
+- Trained using data from https://github.com/titoBouzout/Dictionaries
 
 ## Requirements
 - Python3 <= 3.6
